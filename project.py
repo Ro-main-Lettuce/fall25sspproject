@@ -77,55 +77,6 @@ def task_5(task1_df, task3_df):
     print("✅ Task-5 completed")
     return task5_df
 
-def task_6_auto_validate():
-    df5 = pd.read_csv('task5.csv', encoding='utf-8')
-    df1 = pd.read_csv('task1.csv', encoding='utf-8')[['ID', 'TITLE', 'BODYSTRING']]
-    merged = pd.merge(df5, df1, on='ID')
-    merged['VALIDATED'] = merged['SECURITY'].apply(lambda x: 0 if x == 0 else pd.NA)
-    merged[['ID', 'AGENT', 'TYPE', 'CONFIDENCE', 'SECURITY', 'VALIDATED']].to_csv(
-        'task6.csv', index=False, encoding='utf-8'
-    )
-    print("✅ Task-6 prepared. SECURITY=1 rows require manual validation.")
-
-def run_bandit_on_file(file_path):
-    """Run Bandit on a single Python file, return True if vulnerabilities found."""
-    try:
-        result = subprocess.run(
-            ['bandit', '-r', file_path, '-q', '-f', 'json'],
-            capture_output=True, text=True, check=True
-        )
-        import json
-        bandit_output = json.loads(result.stdout)
-        issues = bandit_output.get('results', [])
-        return int(len(issues) > 0)
-    except Exception as e:
-        print(f"⚠️ Bandit failed on {file_path}: {e}")
-        return 0
-
-def task_7():
-    df4 = pd.read_csv('task4.csv', encoding='utf-8')
-    df4['VULNERABLEFILE'] = 0
-
-    for idx, row in df4.iterrows():
-        filename = row['PRFILE']
-        if pd.isna(filename) or not filename.endswith('.py'):
-            continue
-
-        # Save diff to a temporary Python file
-        temp_dir = 'temp_bandit'
-        os.makedirs(temp_dir, exist_ok=True)
-        temp_path = os.path.join(temp_dir, os.path.basename(filename))
-        with open(temp_path, 'w', encoding='utf-8') as f:
-            # Convert NaN to empty string and replace escaped newlines
-            f.write(str(row['PRDIFF'] or '').replace('\\n', '\n'))
-
-        # Run Bandit
-        is_vulnerable = run_bandit_on_file(temp_path)
-        df4.at[idx, 'VULNERABLEFILE'] = is_vulnerable
-
-    df4.to_csv('task7.csv', index=False, encoding='utf-8')
-    print("✅ Task-7 completed with Bandit scanning")
-
 def main():
     print("Starting full project processing...\n")
     df1 = task_1()
@@ -133,8 +84,6 @@ def main():
     df3 = task_3()
     task_4()
     df5 = task_5(df1, df3)
-    task_6_auto_validate()
-    task_7()
     print("\n🎉 All tasks 1-7 completed successfully.")
 
 if __name__ == "__main__":
